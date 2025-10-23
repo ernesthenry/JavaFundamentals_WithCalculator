@@ -1,0 +1,7 @@
+package Basics;
+
+public class Booleans {
+    public static void main(String[] args) {
+        System.out.println("This is the Booleans example from Basics.");
+    }
+}
