@@ -2,6 +2,8 @@
 
 This project contains Java fundamentals examples. Each folder corresponds to a major section of the tutorial.
 
+This is a project for the Master of Computer Science Advanced Programming course unit.
+
 ## Getting Started
 
 ### Prerequisites
@@ -26,13 +28,13 @@ To get a copy of this project on your computer:
 3. Run this command:
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/java-fundamentals.git
+git clone https://github.com/ernesthenry/JavaFundamentals_WithCalculator
 ```
 
 4. Navigate into the project:
 
 ```bash
-cd java-fundamentals
+cd JavaFundamentals_WithCalculator
 ```
 
 Now you have the project on your local machine!
