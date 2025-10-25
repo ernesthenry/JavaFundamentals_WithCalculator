@@ -2,6 +2,8 @@
 
 This project contains Java fundamentals examples. Each folder corresponds to a major section of the tutorial.
 
+This is a project for the Master of Computer Science Advanced Programming course unit.
+
 ## Getting Started
 
 ### Prerequisites
