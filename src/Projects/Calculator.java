@@ -1,213 +1,336 @@
 package Projects;
 
-import java.util.Scanner;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 
-public class Calculator {
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("=== Scientific Command-Line Calculator ===");
-        System.out.println("Basic operations: +, -, *, /");
-        System.out.println("Scientific functions: sin, cos, tan, sqrt, log, ln, pow, exp");
-        System.out.println("Single-value operations: abs, factorial");
+public class Calculator extends JFrame {
+    // UI Components
+    private JTextField displayField;
+    private JTextArea historyArea;
+    private String currentInput = "";
+    private String operator = "";
+    private double firstNumber = 0;
+    private boolean startNewNumber = false;
+    private boolean scientificMode = false;
 
-        while (true) {
-            System.out.print("\nEnter operation type (basic/scientific) or 'exit' to quit: ");
-            String operationType = scanner.nextLine().trim().toLowerCase();
+    public Calculator() {
+        setTitle("Scientific Calculator");
+        setSize(500, 700);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout(10, 10));
+        getContentPane().setBackground(new Color(45, 45, 45));
 
-            if (operationType.equals("exit")) {
-                System.out.println("Exiting calculator. Goodbye!");
-                break;
-            }
-
-            if (operationType.equals("basic")) {
-                performBasicOperation(scanner);
-            } else if (operationType.equals("scientific")) {
-                performScientificOperation(scanner);
-            } else {
-                System.out.println("Invalid operation type. Please choose 'basic' or 'scientific'.");
-            }
-        }
-
-        scanner.close();
+        initializeComponents();
+        
+        setLocationRelativeTo(null);
+        setVisible(true);
     }
 
-    private static void performBasicOperation(Scanner scanner) {
-        System.out.print("Enter first number: ");
-        double num1;
+    private void initializeComponents() {
+        // Top Panel - Display
+        JPanel topPanel = new JPanel(new BorderLayout(5, 5));
+        topPanel.setBackground(new Color(45, 45, 45));
+        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 5, 10));
+
+        displayField = new JTextField("0");
+        displayField.setFont(new Font("Arial", Font.BOLD, 32));
+        displayField.setHorizontalAlignment(JTextField.RIGHT);
+        displayField.setEditable(false);
+        displayField.setBackground(new Color(60, 60, 60));
+        displayField.setForeground(Color.WHITE);
+        displayField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(80, 80, 80), 2),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+
+        topPanel.add(displayField, BorderLayout.CENTER);
+        add(topPanel, BorderLayout.NORTH);
+
+        // Center Panel - Buttons
+        JPanel buttonPanel = new JPanel(new GridLayout(7, 4, 5, 5));
+        buttonPanel.setBackground(new Color(45, 45, 45));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
+        String[][] buttons = {
+            {"sin", "cos", "tan", "√"},
+            {"log", "ln", "x^y", "e^x"},
+            {"abs", "(", ")", "C"},
+            {"7", "8", "9", "÷"},
+            {"4", "5", "6", "×"},
+            {"1", "2", "3", "-"},
+            {"0", ".", "=", "+"}
+        };
+
+        for (String[] row : buttons) {
+            for (String btnText : row) {
+                JButton button = createButton(btnText);
+                buttonPanel.add(button);
+            }
+        }
+
+        add(buttonPanel, BorderLayout.CENTER);
+
+        // Bottom Panel - History
+        JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
+        bottomPanel.setBackground(new Color(45, 45, 45));
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
+
+        JLabel historyLabel = new JLabel("History:");
+        historyLabel.setForeground(Color.WHITE);
+        historyLabel.setFont(new Font("Arial", Font.BOLD, 14));
+
+        historyArea = new JTextArea(5, 20);
+        historyArea.setEditable(false);
+        historyArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        historyArea.setBackground(new Color(60, 60, 60));
+        historyArea.setForeground(Color.WHITE);
+        JScrollPane scrollPane = new JScrollPane(historyArea);
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(80, 80, 80), 2));
+
+        bottomPanel.add(historyLabel, BorderLayout.NORTH);
+        bottomPanel.add(scrollPane, BorderLayout.CENTER);
+
+        add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    private JButton createButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 18));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createLineBorder(new Color(80, 80, 80), 1));
+        
+        // Color coding
+        if (text.matches("[0-9.]")) {
+            // Number buttons - dark gray
+            button.setBackground(new Color(70, 70, 70));
+            button.setForeground(Color.WHITE);
+        } else if (text.matches("[+\\-×÷=]")) {
+            // Basic operators - orange
+            button.setBackground(new Color(255, 149, 0));
+            button.setForeground(Color.WHITE);
+        } else if (text.equals("C")) {
+            // Clear button - red
+            button.setBackground(new Color(220, 53, 69));
+            button.setForeground(Color.WHITE);
+        } else {
+            // Scientific functions - blue
+            button.setBackground(new Color(52, 152, 219));
+            button.setForeground(Color.WHITE);
+        }
+
+        button.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                button.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+            }
+            public void mouseExited(MouseEvent e) {
+                button.setBorder(BorderFactory.createLineBorder(new Color(80, 80, 80), 1));
+            }
+        });
+
+        button.addActionListener(e -> handleButtonClick(text));
+        
+        return button;
+    }
+
+    private void handleButtonClick(String text) {
         try {
-            num1 = Double.parseDouble(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input. Please enter a valid number.");
+            switch (text) {
+                case "C":
+                    clearAll();
+                    break;
+                case "=":
+                    calculateResult();
+                    break;
+                case "+":
+                case "-":
+                case "×":
+                case "÷":
+                case "x^y":
+                    handleOperator(text);
+                    break;
+                case "sin":
+                case "cos":
+                case "tan":
+                case "√":
+                case "log":
+                case "ln":
+                case "e^x":
+                case "abs":
+                    handleScientificFunction(text);
+                    break;
+                default:
+                    handleNumberInput(text);
+                    break;
+            }
+        } catch (Exception ex) {
+            displayField.setText("Error");
+            addToHistory("Error: " + ex.getMessage());
+        }
+    }
+
+    private void handleNumberInput(String text) {
+        if (startNewNumber) {
+            currentInput = text;
+            startNewNumber = false;
+        } else {
+            if (text.equals(".") && currentInput.contains(".")) {
+                return;
+            }
+            currentInput += text;
+        }
+        displayField.setText(currentInput);
+    }
+
+    private void handleOperator(String op) {
+        if (!currentInput.isEmpty()) {
+            if (!operator.isEmpty()) {
+                calculateResult();
+            }
+            firstNumber = Double.parseDouble(currentInput);
+            operator = op;
+            startNewNumber = true;
+        }
+    }
+
+    private void calculateResult() {
+        if (operator.isEmpty() || currentInput.isEmpty()) {
             return;
         }
 
-        System.out.print("Enter operator (+, -, *, /): ");
-        char operator = scanner.nextLine().charAt(0);
+        double secondNumber = Double.parseDouble(currentInput);
+        double result = 0;
+        String calculation = firstNumber + " " + operator + " " + secondNumber;
 
-        System.out.print("Enter second number: ");
-        double num2;
-        try {
-            num2 = Double.parseDouble(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input. Please enter a valid number.");
-            return;
-        }
-
-        double result;
         switch (operator) {
-            case '+':
-                result = num1 + num2;
+            case "+":
+                result = firstNumber + secondNumber;
                 break;
-            case '-':
-                result = num1 - num2;
+            case "-":
+                result = firstNumber - secondNumber;
                 break;
-            case '*':
-                result = num1 * num2;
+            case "×":
+                result = firstNumber * secondNumber;
                 break;
-            case '/':
-                if (num2 == 0) {
-                    System.out.println("Error: Cannot divide by zero.");
+            case "÷":
+                if (secondNumber == 0) {
+                    displayField.setText("Error: Div by 0");
+                    addToHistory(calculation + " = Error (Division by zero)");
+                    operator = "";
+                    currentInput = "";
                     return;
                 }
-                result = num1 / num2;
+                result = firstNumber / secondNumber;
                 break;
-            default:
-                System.out.println("Invalid operator. Please use +, -, *, or /.");
-                return;
+            case "x^y":
+                result = Math.pow(firstNumber, secondNumber);
+                calculation = firstNumber + "^" + secondNumber;
+                break;
         }
 
-        System.out.println("Result: " + result);
+        displayField.setText(formatResult(result));
+        addToHistory(calculation + " = " + formatResult(result));
+        
+        currentInput = String.valueOf(result);
+        operator = "";
+        startNewNumber = true;
     }
 
-    private static void performScientificOperation(Scanner scanner) {
-        System.out.print("Enter function (sin, cos, tan, sqrt, log, ln, pow, exp, abs, factorial): ");
-        String function = scanner.nextLine().trim().toLowerCase();
+    private void handleScientificFunction(String function) {
+        if (currentInput.isEmpty()) {
+            return;
+        }
 
-        double result;
+        double number = Double.parseDouble(currentInput);
+        double result = 0;
+        String calculation = "";
 
         switch (function) {
             case "sin":
-                System.out.print("Enter angle in degrees: ");
-                double angleSin = getNumberInput(scanner);
-                if (Double.isNaN(angleSin)) return;
-                result = Math.sin(Math.toRadians(angleSin));
-                System.out.println("sin(" + angleSin + "°) = " + result);
+                result = Math.sin(Math.toRadians(number));
+                calculation = "sin(" + number + "°)";
                 break;
-
             case "cos":
-                System.out.print("Enter angle in degrees: ");
-                double angleCos = getNumberInput(scanner);
-                if (Double.isNaN(angleCos)) return;
-                result = Math.cos(Math.toRadians(angleCos));
-                System.out.println("cos(" + angleCos + "°) = " + result);
+                result = Math.cos(Math.toRadians(number));
+                calculation = "cos(" + number + "°)";
                 break;
-
             case "tan":
-                System.out.print("Enter angle in degrees: ");
-                double angleTan = getNumberInput(scanner);
-                if (Double.isNaN(angleTan)) return;
-                result = Math.tan(Math.toRadians(angleTan));
-                System.out.println("tan(" + angleTan + "°) = " + result);
+                result = Math.tan(Math.toRadians(number));
+                calculation = "tan(" + number + "°)";
                 break;
-
-            case "sqrt":
-                System.out.print("Enter number: ");
-                double num = getNumberInput(scanner);
-                if (Double.isNaN(num)) return;
-                if (num < 0) {
-                    System.out.println("Error: Cannot calculate square root of negative number.");
+            case "√":
+                if (number < 0) {
+                    displayField.setText("Error: Negative");
+                    addToHistory("√" + number + " = Error (Negative number)");
                     return;
                 }
-                result = Math.sqrt(num);
-                System.out.println("√" + num + " = " + result);
+                result = Math.sqrt(number);
+                calculation = "√" + number;
                 break;
-
             case "log":
-                System.out.print("Enter number (log base 10): ");
-                double numLog = getNumberInput(scanner);
-                if (Double.isNaN(numLog)) return;
-                if (numLog <= 0) {
-                    System.out.println("Error: Logarithm undefined for non-positive numbers.");
+                if (number <= 0) {
+                    displayField.setText("Error: Non-positive");
+                    addToHistory("log(" + number + ") = Error (Non-positive)");
                     return;
                 }
-                result = Math.log10(numLog);
-                System.out.println("log₁₀(" + numLog + ") = " + result);
+                result = Math.log10(number);
+                calculation = "log₁₀(" + number + ")";
                 break;
-
             case "ln":
-                System.out.print("Enter number (natural log): ");
-                double numLn = getNumberInput(scanner);
-                if (Double.isNaN(numLn)) return;
-                if (numLn <= 0) {
-                    System.out.println("Error: Natural logarithm undefined for non-positive numbers.");
+                if (number <= 0) {
+                    displayField.setText("Error: Non-positive");
+                    addToHistory("ln(" + number + ") = Error (Non-positive)");
                     return;
                 }
-                result = Math.log(numLn);
-                System.out.println("ln(" + numLn + ") = " + result);
+                result = Math.log(number);
+                calculation = "ln(" + number + ")";
                 break;
-
-            case "pow":
-                System.out.print("Enter base: ");
-                double base = getNumberInput(scanner);
-                if (Double.isNaN(base)) return;
-                System.out.print("Enter exponent: ");
-                double exponent = getNumberInput(scanner);
-                if (Double.isNaN(exponent)) return;
-                result = Math.pow(base, exponent);
-                System.out.println(base + "^" + exponent + " = " + result);
+            case "e^x":
+                result = Math.exp(number);
+                calculation = "e^" + number;
                 break;
-
-            case "exp":
-                System.out.print("Enter exponent (e^x): ");
-                double exp = getNumberInput(scanner);
-                if (Double.isNaN(exp)) return;
-                result = Math.exp(exp);
-                System.out.println("e^" + exp + " = " + result);
-                break;
-
             case "abs":
-                System.out.print("Enter number: ");
-                double numAbs = getNumberInput(scanner);
-                if (Double.isNaN(numAbs)) return;
-                result = Math.abs(numAbs);
-                System.out.println("|" + numAbs + "| = " + result);
+                result = Math.abs(number);
+                calculation = "|" + number + "|";
                 break;
+        }
 
-            case "factorial":
-                System.out.print("Enter non-negative integer: ");
-                int numFact = (int) getNumberInput(scanner);
-                if (numFact < 0) {
-                    System.out.println("Error: Factorial is only defined for non-negative integers.");
-                    return;
-                }
-                if (numFact > 20) {
-                    System.out.println("Error: Factorial too large (max 20).");
-                    return;
-                }
-                long factResult = factorial(numFact);
-                System.out.println(numFact + "! = " + factResult);
-                break;
+        displayField.setText(formatResult(result));
+        addToHistory(calculation + " = " + formatResult(result));
+        
+        currentInput = String.valueOf(result);
+        startNewNumber = true;
+    }
 
-            default:
-                System.out.println("Invalid function. Please choose from the available functions.");
+    private void clearAll() {
+        currentInput = "";
+        operator = "";
+        firstNumber = 0;
+        startNewNumber = false;
+        displayField.setText("0");
+    }
+
+    private String formatResult(double result) {
+        if (result == (long) result) {
+            return String.format("%d", (long) result);
+        } else {
+            return String.format("%.8f", result).replaceAll("0*$", "").replaceAll("\\.$", "");
         }
     }
 
-    private static double getNumberInput(Scanner scanner) {
-        try {
-            return Double.parseDouble(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input. Please enter a valid number.");
-            return Double.NaN;
-        }
+    private void addToHistory(String entry) {
+        historyArea.append(entry + "\n");
+        historyArea.setCaretPosition(historyArea.getDocument().getLength());
     }
 
-    private static long factorial(int n) {
-        if (n == 0 || n == 1) return 1;
-        long result = 1;
-        for (int i = 2; i <= n; i++) {
-            result *= i;
-        }
-        return result;
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            new Calculator();
+        });
     }
 }
