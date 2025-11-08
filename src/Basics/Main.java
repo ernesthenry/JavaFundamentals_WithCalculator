@@ -19,3 +19,9 @@ public class Main {
 
   }
 }
+
+// package Basics; // declare the package name
+// public class Main{ // define the main class 
+
+  
+// }
