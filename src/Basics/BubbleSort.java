@@ -4,7 +4,7 @@ package Basics;
  * BUBBLE SORT ALGORITHM
  * A simple sorting algorithm that repeatedly steps through the list,
  * compares adjacent elements and swaps them if they're in wrong order
- * From lecture notes - sorting arrays
+* From lecture notes - sorting arrays``
  */
 public class BubbleSort {
 
@@ -21,22 +21,26 @@ public class BubbleSort {
      */
     static void bubbleSort(int[] arr) {
         int n = arr.length;
+        // int n = arr.length;
 
         // Outer loop: controls number of passes
         // We need (n-1) passes to sort n elements
         for (int i = 0; i < n - 1; i++) {
+        // for (int i =0; i<n-1; i++){}
 
             // Inner loop: compares adjacent elements
             // After each pass, last i elements are already sorted
             // So we check up to (n-i-1)
             for (int j = 0; j < n - i - 1; j++) {
+            // for (int j=0; j<n-i-1; j++){}
+                // if(arr[j] > arr[j+1]){}
 
                 // Compare adjacent elements
                 if (arr[j] > arr[j + 1]) {
                     // Swap if left element is greater than right
-                    int temp = arr[j];
-                    arr[j] = arr[j + 1];
-                    arr[j + 1] = temp;
+                    int temp = arr[j]; // Temporary variable for swapping
+                    arr[j] = arr[j + 1]; // Swap left with right
+                    arr[j + 1] = temp; // Place temp (original left) in right position
                 }
             }
         }
